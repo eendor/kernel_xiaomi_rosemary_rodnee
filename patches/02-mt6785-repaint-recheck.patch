@@ -1,0 +1,54 @@
+From 520fe54794eb7bfee1e5145381c48d4c7fb95b4a Mon Sep 17 00:00:00 2001
+From: Firmank123 <firmankediri123@gmail.com>
+Date: Mon, 9 Nov 2026 04:21:45 +0700
+Subject: [PATCH] video: mt6785: Recheck the repaint queue after waking
+
+Multiple display clients can wake when one repaint job is queued.
+After the first client consumes it, another can acquire the mutex
+and treat the empty list head as a job, corrupting the queue.
+
+Check for a job while holding the queue mutex and return to the
+interruptible wait if another client won the race. Preserve the
+signal return so userspace can stop a waiter normally.
+
+Assisted-by: GPT-6.1-Sol
+---
+ .../video/mt6785/videox/mtk_disp_mgr.c        | 24 ++++++++++---------
+ 1 file changed, 13 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/misc/mediatek/video/mt6785/videox/mtk_disp_mgr.c b/drivers/misc/mediatek/video/mt6785/videox/mtk_disp_mgr.c
+index 4b55b04af5b3..21d87ce61c50 100644
+--- a/drivers/misc/mediatek/video/mt6785/videox/mtk_disp_mgr.c
++++ b/drivers/misc/mediatek/video/mt6785/videox/mtk_disp_mgr.c
+@@ -1507,18 +1507,20 @@ int _ioctl_wait_self_refresh_trigger(unsigned long arg)
+ 	/* reset status & wake-up threads which wait for repainting */
+ 	DISPMSG("[REPAINT] HWC waits for repaint\n");
+ 
+-	/*  wait for repaint */
+-	ret = wait_event_interruptible(repaint_wq,
+-			!list_empty(&repaint_job_queue));
+-	if (ret < 0) {
+-		DISP_PR_ERR("[REPAINT] wait_event unexpectedly, ret:%d\n", ret);
+-		return ret;
+-	}
++	for (;;) {
++		ret = wait_event_interruptible(repaint_wq,
++				!list_empty(&repaint_job_queue));
++		if (ret < 0)
++			return ret;
+ 
+-	/* retrieve first repaint_job_t from queue */
+-	mutex_lock(&repaint_queue_lock);
+-	repaint_job = list_first_entry(&repaint_job_queue,
+-		struct repaint_job_t, link);
++		/* Another waiter may have dequeued the job after we woke. */
++		mutex_lock(&repaint_queue_lock);
++		repaint_job = list_first_entry_or_null(&repaint_job_queue,
++			struct repaint_job_t, link);
++		if (repaint_job)
++			break;
++		mutex_unlock(&repaint_queue_lock);
++	}
+ 	type = repaint_job->type;
+ 
+ 	/* remove from queue & add repaint_job_t in pool */

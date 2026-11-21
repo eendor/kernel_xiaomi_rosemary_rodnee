@@ -1,0 +1,7 @@
+build/
+.release_assets/
+*.img
+*.tar.xz
+*.apk
+rodnee-tuner/target/
+rodnee-tuner/rodnee-tuner
