@@ -1,12 +1,12 @@
 diff --git a/scripts/extract-cert.c b/scripts/extract-cert.c
+index 68f73787d..941d1f59a 100644
 --- a/scripts/extract-cert.c
 +++ b/scripts/extract-cert.c
-@@ -20,8 +20,11 @@
- #include <err.h>
+@@ -21,7 +21,10 @@
  #include <openssl/bio.h>
  #include <openssl/pem.h>
-+#include <openssl/opensslv.h>
  #include <openssl/err.h>
++#include <openssl/opensslv.h>
 +#if !defined(OPENSSL_IS_BORINGSSL) && OPENSSL_VERSION_NUMBER < 0x40000000L
  #include <openssl/engine.h>
 +#endif
@@ -23,34 +23,36 @@ diff --git a/scripts/extract-cert.c b/scripts/extract-cert.c
  		exit(1);
  #else
 diff --git a/scripts/sign-file.c b/scripts/sign-file.c
+index dd509a571..5b119319e 100644
 --- a/scripts/sign-file.c
 +++ b/scripts/sign-file.c
-@@ -27,7 +27,9 @@
+@@ -27,7 +27,10 @@
  #include <openssl/evp.h>
  #include <openssl/pem.h>
  #include <openssl/err.h>
++#include <openssl/opensslv.h>
 +#if !defined(OPENSSL_IS_BORINGSSL) && OPENSSL_VERSION_NUMBER < 0x40000000L
  #include <openssl/engine.h>
 +#endif
  
  /*
   * OpenSSL 3.0 deprecates the OpenSSL's ENGINE API.
-@@ -144,6 +146,10 @@ static EVP_PKEY *read_private_key(const char *private_key_name)
- 	EVP_PKEY *private_key;
+@@ -148,6 +151,10 @@ static EVP_PKEY *read_private_key(const char *private_key_name)
  
+ #ifndef OPENSSL_NO_ENGINE
  	if (!strncmp(private_key_name, "pkcs11:", 7)) {
 +#if defined(OPENSSL_IS_BORINGSSL) || OPENSSL_VERSION_NUMBER >= 0x40000000L
-+		ERR(1, "PKCS#11 ENGINE unavailable on OpenSSL >= 4.0");
++		ERR(1, "PKCS#11 ENGINE unavailable");
 +		exit(1);
 +#else
  		ENGINE *e;
  
  		ENGINE_load_builtin_engines();
-@@ -160,6 +166,7 @@ static EVP_PKEY *read_private_key(const char *private_key_name)
- 		private_key = ENGINE_load_private_key(e, private_key_name,
- 						      NULL, NULL);
- 		ERR(!private_key, "%s", private_key_name);
+@@ -273,6 +280,7 @@ int main(int argc, char **argv)
+ 	if (raw_sig) {
+ 		raw_sig_name = argv[0];
+ 		hash_algo = argv[1];
 +#endif
  	} else {
- 		BIO *b;
- 
+ 		hash_algo = argv[0];
+ 		private_key_name = argv[1];

@@ -59,9 +59,9 @@ make "${MAKE_ARGS[@]}" rosemary_defconfig
   --disable THINLTO \
   --enable ARM64_LSE_ATOMICS \
   --disable DEBUG_INFO \
-  --enable CPU_IDLE_NO_MTK \
-  --disable ARM_MTK_CPUIDLE \
-  --disable CPU_IDLE_GOV_MTK_MENU \
+  --disable CPU_IDLE_NO_MTK \
+  --enable ARM_MTK_CPUIDLE \
+  --enable CPU_IDLE_GOV_MTK_MENU \
   --enable WQ_POWER_EFFICIENT_DEFAULT \
   --enable PREEMPT \
   --enable CGROUP_SCHED \

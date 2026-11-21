@@ -18,7 +18,7 @@ Tuned for **locked 60 fps smoothness**, **full MediaTek hardware acceleration**,
 - **Low-Latency Scheduler & Idle Config:**
   - `CONFIG_PREEMPT=y`, `HZ=250`, `CONFIG_UCLAMP_TASK=y`, `CONFIG_UCLAMP_TASK_GROUP=y`
   - Disabled scheduler tracing & CFS fair-group overhead (`FAIR_GROUP_SCHED=n`, `MTK_SCHED_TRACERS=n`, `SCHEDSTATS=n`, `SCHED_INFO=n`)
-  - `CONFIG_CPU_IDLE_NO_MTK=y` (`menu` governor — eliminates 150 µs `mcdi` wakeup stalls), `CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y`
+  - Official MediaTek CPUidle (`CONFIG_ARM_MTK_CPUIDLE=y`, `CONFIG_CPU_IDLE_GOV_MTK_MENU=y`, `mcdi` + proper PSCI deep-sleep init), `CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y`
   - Fixed `mtktsbtspdchg` double-ADC thermal reading bug (`lineage-24.0`), removed spurious WiFi `gen4m` CPU boost, disabled TrustZone logging overhead
 - **I/O, ZRAM & Networking:**
   - `deadline` default I/O scheduler (`CONFIG_DEFAULT_IOSCHED="deadline"`)
@@ -38,8 +38,9 @@ Tuned for **locked 60 fps smoothness**, **full MediaTek hardware acceleration**,
 ├── patches/
 │   ├── 01-mt6785-repaint-unlock.patch   # Unlock repaint queue on alloc failure
 │   ├── 02-mt6785-repaint-recheck.patch  # Recheck repaint queue after waking
-│   ├── 03-mcdi-no-mtk-menu-guard.patch  # Guard get_menu_* when CPU_IDLE_NO_MTK=y
-│   └── 04-openssl4-host-compat.patch    # Host OpenSSL 4.x compatibility for scripts/
+│   ├── 03-mcdi-no-mtk-menu-guard.patch  # Guard get_menu_* when mtk_menu disabled
+│   ├── 04-openssl4-host-compat.patch    # Host OpenSSL 4.x compatibility for scripts/
+│   └── 05-psci-null-guard.patch         # Defensive NULL guard in psci_cpu_suspend_enter
 ├── rodnee-tuner/
 │   ├── Cargo.toml
 │   ├── src/main.rs                      # Native Rust aarch64 runtime tuner
@@ -51,7 +52,7 @@ Tuned for **locked 60 fps smoothness**, **full MediaTek hardware acceleration**,
 
 ---
 
-## Prebuilt Release (`v2.0`)
+## Prebuilt Release (`v2.1`)
 
 Prebuilt binaries are attached under **[Releases](https://github.com/eendor/kernel_xiaomi_rosemary_rodnee/releases)**:
 

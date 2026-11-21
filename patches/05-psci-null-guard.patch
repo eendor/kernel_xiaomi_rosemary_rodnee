@@ -1,0 +1,13 @@
+diff --git a/drivers/firmware/psci.c b/drivers/firmware/psci.c
+index 64a88d5f1..ee1fa9136 100644
+--- a/drivers/firmware/psci.c
++++ b/drivers/firmware/psci.c
+@@ -428,7 +428,7 @@ int psci_cpu_suspend_enter(unsigned long index)
+ 	 * idle state index 0 corresponds to wfi, should never be called
+ 	 * from the cpu_suspend operations
+ 	 */
+-	if (WARN_ON_ONCE(!index))
++	if (WARN_ON_ONCE(!index || !state))
+ 		return -EINVAL;
+ 
+ 	if (!psci_power_state_loses_context(state[index - 1]))
